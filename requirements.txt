@@ -1,0 +1,7 @@
+# Data pipeline (versions tested on Python 3.14.4)
+pandas==3.1.0
+pyarrow==26.0.0
+numpy==2.5.4
+scipy==1.18.1
+scikit-learn==1.9.1
+ftfy==6.3.1

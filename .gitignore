@@ -1,0 +1,34 @@
+# Data: regenerate with R/export_corpus.R + src/prepare_data.py (see README).
+# The lyrics are copyrighted song texts scraped from Genius, so they should not
+# be redistributed in a public repo, and the files are too large for Git anyway.
+data/
+*.parquet
+*.csv
+*.qs2
+*.rds
+*.rda
+
+# Model artifacts (DistilBERT checkpoints are hundreds of MB)
+models/
+checkpoints/
+runs/
+*.pt
+*.bin
+*.safetensors
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# R
+.Rhistory
+.RData
+.Rproj.user/
+
+# Editors / OS
+.vscode/*
+!.vscode/settings.json
+.DS_Store
+.vscode/

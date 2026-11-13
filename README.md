@@ -3,8 +3,10 @@
 Author attribution on metal song lyrics: a classic stylometric baseline
 (function-word / character n-gram features + logistic regression or SVM, and
 Burrows' Delta) compared with a fine-tuned DistilBERT classifier. Metrics:
-accuracy, macro-F1, confusion matrix. A follow-up experiment narrows to
-Viking-themed bands to control for topic.
+accuracy, macro-F1, confusion matrix. To test whether the classifiers pick up
+style or shared subject matter, the same pipeline is run on three band sets
+(10 bands x 100 songs each): a mixed sub-genre set and two narrower
+ones, death metal and power metal (see [Band sets](#band-sets)).
 
 Data: `corpus_metal_lyrics` from the R package
 [text2map.corpora](https://gitlab.com/culturalcartography/text2map.corpora),
@@ -20,21 +22,26 @@ texts and too large to commit, so anyone cloning the repo rebuilds them:
 #    R >= 4.5 with build tools (Ubuntu: build-essential, libcurl/ssl/xml dev libs)
 Rscript -e 'install.packages(c("remotes", "nanoparquet"))'
 Rscript -e 'remotes::install_gitlab("culturalcartography/text2map.corpora")'
-python -m venv .venv && .venv/bin/pip install -r requirements.txt
+python3 -m pip install -r requirements.txt
 
 # 1. Download the corpus and export it to Parquet (~10 s; ~500 MB file)
 Rscript R/export_corpus.R               # -> data/raw/metal_lyrics.parquet
 
 # 2. Clean + dedupe, print per-artist counts (~1.5 min, ~3 GB RAM)
-.venv/bin/python src/prepare_data.py    # -> data/processed/artist_counts.csv
+python3 src/prepare_data.py             # -> data/processed/artist_counts.csv
 
-# 3. Build a balanced, album-split dataset
-.venv/bin/python src/prepare_data.py --top-n 20
-#    -> data/processed/dataset_top20_cap157.parquet (+ .json with the settings)
+# 3. Build the three balanced, album-split datasets (run from the repo root)
+python3 src/prepare_data.py --artists "Cannibal Corpse, Deicide, Immolation, Incantation, Krisiun, Malevolent Creation, Napalm Death, Six Feet Under, Unleashed, Vader" --tag Death --cap 100
+python3 src/prepare_data.py --artists "Blind Guardian, Bloodbound, Elvenking, Freedom Call, Grave Digger, HammerFall, Helloween, Iced Earth, Kamelot, Rage" --tag Power --cap 100
+python3 src/prepare_data.py --artists "Accept, Korn, Iron Maiden, Venom, Sevendust, Black Label Society, King Diamond, Megadeth, W.A.S.P., GWAR" --tag Mixed --cap 100
+#    -> data/processed/dataset_{Death,Power,Mixed}_cap100.parquet (+ .json with the settings)
 ```
 
+The band lists and the cap are stored in `configs/band_sets.json`; the
+commands above are copied from it.
+
 Everything is deterministic (`--seed 42`), so the same commands give the same
-dataset. Run `python src/prepare_data.py --help` for all options.
+dataset. Run `python3 src/prepare_data.py --help` for all options.
 
 | File (data/processed/) | Contents |
 |---|---|
@@ -43,6 +50,58 @@ dataset. Run `python src/prepare_data.py --help` for all options.
 | `removed.parquet` | every removed song, the reason, and the song it duplicated |
 | `cleaning_report.json` | row counts before/after each step |
 | `dataset_<tag>_cap<C>.parquet` | final dataset; `lyrics_clean` is the model input, `split` is train/val/test |
+
+## Band sets
+
+Three sets of 10 bands, 100 songs per band, built with identical settings.
+"Songs" is the number available after cleaning (before downsampling to 100);
+"Tags" are the corpus genre labels across the band's songs, with the number
+of songs carrying each label when not all of them do.
+
+**Death** (`dataset_Death_cap100.parquet`)
+
+| Band | Tags | Songs |
+|---|---|---|
+| Cannibal Corpse | Death Metal | 167 |
+| Deicide | Death Metal | 126 |
+| Immolation | Death Metal | 107 |
+| Incantation | Death Metal | 107 |
+| Krisiun | Death Metal | 110 |
+| Malevolent Creation | Death Metal | 142 |
+| Napalm Death | Death Metal (170), Grindcore (47) | 191 |
+| Six Feet Under | Death Metal | 114 |
+| Unleashed | Death Metal | 144 |
+| Vader | Death Metal | 141 |
+
+**Power** (`dataset_Power_cap100.parquet`)
+
+| Band | Tags | Songs |
+|---|---|---|
+| Blind Guardian | Power Metal, Heavy Metal (17), Symphonic Metal (13), Thrash Metal (13) | 107 |
+| Bloodbound | Power Metal (87), Heavy Metal (32) | 109 |
+| Elvenking | Power Metal, Folk Metal (43) | 123 |
+| Freedom Call | Power Metal | 119 |
+| Grave Digger | Heavy Metal, Power Metal (185) | 211 |
+| HammerFall | Power Metal, Heavy Metal (102) | 123 |
+| Helloween | Power Metal (139), Heavy Metal (50) | 167 |
+| Iced Earth | Heavy Metal, Power Metal (127) | 129 |
+| Kamelot | Power Metal (115), Symphonic Metal (51), Thrash Metal (51), Progressive Metal (24), Heavy Metal (10) | 129 |
+| Rage | Power Metal (269), Heavy Metal (168), Symphonic Metal (35), Thrash Metal (35), Progressive Metal (10) | 307 |
+
+**Mixed** (`dataset_Mixed_cap100.parquet`)
+
+| Band | Tags | Songs |
+|---|---|---|
+| Accept | Heavy Metal | 175 |
+| Korn | Alt Metal | 162 |
+| Iron Maiden | Heavy Metal | 148 |
+| Venom | Heavy Metal | 143 |
+| Sevendust | Alt Metal, Groove Metal (11) | 134 |
+| Black Label Society | Heavy Metal (112), Southern Metal (111), Groove Metal (23) | 123 |
+| King Diamond | Heavy Metal | 122 |
+| Megadeth | Heavy Metal | 122 |
+| W.A.S.P. | Heavy Metal | 118 |
+| GWAR | Heavy Metal (96), Alt Metal (30) | 112 |
 
 ## Data decisions
 
@@ -67,7 +126,7 @@ The corpus was scraped genre by genre, so an album tagged with k genres appears
 k times: same URL and lyrics, different `genre`/`score`. Keeping these would
 inflate artist counts (Rage 605 -> 307, Grave Digger 413 -> 211) and, worse, put
 identical songs in both train and test. One row per URL is kept, and all its
-genre labels are joined into a `genres` column (useful for picking Viking bands).
+genre labels are joined into a `genres` column (used for picking the band sets).
 
 `song_number` is the track number within an album, not an ID; the export adds
 `row_id` (original row order) for traceability.
@@ -140,12 +199,48 @@ rather than Jaccard, because a live version with extra repeats still
 These checks only run for artists that could still reach `--min-songs`
 (dedup only lowers counts), which keeps memory under ~3 GB.
 
+### Experimental design: three band sets
+**Research question.** Do the classifiers identify bands by style, or by
+shared subject matter? A topically mixed set is compared with two topically
+narrower sets. If accuracy drops sharply when all bands write about the same
+things, the models were leaning on topic. Having two narrow sets acts as a
+replication: one narrow set could be easy or hard for idiosyncratic reasons.
+
+**Why death and power metal.** Metal subgenres concentrate in a few lyric
+topics (Aljanaki 2024), so a subgenre is a practical stand-in for "shared
+subject matter". The two are kept in separate sets because their themes differ
+sharply (gore, death and anti-religion vs. fantasy, heroism and history);
+merged, they would just form another mixed set.
+
+**How bands were picked.** By hand, from the subgenre tags in a notebook,
+because `prepare_data.py` selects by artist (`--artists` / `--top-n`), not by
+genre. A band was excluded from the Mixed set if any of its songs carries a
+Death or Power tag, so the Mixed set doesn't overlap the narrow ones.
+
+**Why 10 x 100.** It is the largest size at which all three sets could be
+filled with eligible bands (>= 3 albums, >= 100 songs after cleaning). Earlier
+plans (5 bands per set, or a 6-7 band Viking set) were too small for
+fine-tuning DistilBERT.
+
+**Rejected options.**
+- *Heavy Metal as a shared-topic set*: it is an umbrella label spanning many
+  subgenres, so it isn't topically narrow.
+- *The earlier runs* (`dataset_top20_cap157`, `dataset_viking_cap64`) are
+  superseded: neither compared topic-matched sets, and the Viking set was too small.
+
+**Known limitations of the sets.**
+- The Death set is not topically uniform: Napalm Death writes political
+  lyrics, Unleashed has Viking themes, Deicide is explicitly anti-religious.
+- The Mixed set leans toward traditional heavy metal (6 of 10 bands are
+  tagged only Heavy Metal), alongside alt/nu metal, thrash and others.
+
 ### Balancing: equal songs per artist
-After cleaning, the top-N artists (with >= 3 albums) are selected and each is
-randomly downsampled to the same number of songs (default: the Nth artist's
-count; top 20 -> 157 songs each). With equal class sizes, accuracy and
+After cleaning, the listed artists (each must have >= 3 albums) are randomly
+downsampled to the same number of songs (`--cap 100`; without `--cap`, the
+smallest selected artist's count). With equal class sizes, accuracy and
 macro-F1 can't be inflated by predicting the biggest artist, and the
-confusion matrix rows are directly comparable.
+confusion matrix rows are directly comparable. Using the same cap for all
+three sets also keeps their results comparable.
 
 ### Train/val/test split by album
 Albums are kept whole: every (artist, album) pair lands in exactly one split
@@ -159,16 +254,18 @@ asserts this). Why not a random split:
   album topics. An album split asks the harder, more honest question: can the
   model recognize an artist on an album it has never seen?
 
-Defaults: 1/5 of albums -> test (~20% of each artist's songs; observed 17-22%
-for the top 20), 1/8 of the remaining albums -> val (~10%, for DistilBERT
-early stopping and hyperparameter choice). Shares vary a little because albums
-differ in size.
+Defaults: 1/5 of albums -> test, 1/8 of the remaining albums -> val (for
+DistilBERT early stopping and hyperparameter choice). Each of the three sets
+comes out at roughly 70% train / 10% val / 20% test (e.g. Death: 698 / 102 /
+200 songs), and every band's test share is between about 16% and 24%. Shares
+vary a little because albums differ in size.
 
-For small selections (e.g. the 6-band Viking set, 64 songs each), some artists
-may get no val songs. Use `--val-folds 0` and cross-validate on train
-(GroupKFold by album) instead.
+### Evaluation plan
+A single album-based split (the one above, `--seed 42`) is used during
+development. Final results are averaged over 2-3 random seeds, so that a
+single run doesn't decide the comparison between sets.
 
-## Known limitations (worth stating in the report)
+## Known limitations
 - **Band != author.** Labels are bands. Lyricists change over a band's career,
   and some lyricists wrote for several bands (e.g. Accept and U.D.O. share
   history). Genius transcriptions are also crowd-written, so residual
@@ -179,16 +276,3 @@ may get no val songs. Use `--val-folds 0` and cross-validate on train
 - DistilBERT's 512-token limit truncates long songs (median ~180 words is fine;
   Cradle of Filth's median is 353 words). Handle this in the model code.
 
-## VS Code + R notes
-R is only used for downloading and exporting. The vscode-R extension's session
-watcher needs the `sess` package, which ships *inside* the extension (not on
-CRAN). Install it from the extension folder if the watcher fails to attach:
-
-```bash
-Rscript -e 'install.packages(c("processx", "later", "jsonlite", "rstudioapi"))'
-R CMD INSTALL ~/.vscode-server/extensions/reditorsupport.r-*/dist/resources/sess
-```
-
-`languageserver` (completion/hover/diagnostics) needs libuv. If `fs` fails to
-build, run `sudo apt install libuv1-dev`, or use
-`USE_BUNDLED_LIBUV=1 Rscript -e 'install.packages("languageserver")'`.

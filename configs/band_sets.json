@@ -1,0 +1,11 @@
+{
+  "cap": 100,
+  "sets": {
+    "Death": ["Cannibal Corpse", "Deicide", "Immolation", "Incantation", "Krisiun",
+              "Malevolent Creation", "Napalm Death", "Six Feet Under", "Unleashed", "Vader"],
+    "Power": ["Blind Guardian", "Bloodbound", "Elvenking", "Freedom Call", "Grave Digger",
+              "HammerFall", "Helloween", "Iced Earth", "Kamelot", "Rage"],
+    "Mixed": ["Accept", "Korn", "Iron Maiden", "Venom", "Sevendust",
+              "Black Label Society", "King Diamond", "Megadeth", "W.A.S.P.", "GWAR"]
+  }
+}

@@ -123,5 +123,36 @@ print(f"\nTEST accuracy={acc:.3f}  macro-F1={macro_f1:.3f}  (chance = {1 / y_te.
 #   support:   how many test songs that band has
 print(classification_report(y_te, pred, zero_division=0))
 
+# ---------------------------------------------------------------------------
+# Confusion matrix
+# ---------------------------------------------------------------------------
+# A grid with true bands as rows and predicted bands as columns. The diagonal
+# holds correct predictions; any number off the diagonal shows a specific
+# mix-up, e.g. "5 Vader songs were predicted as Krisiun"
+fig, ax = plt.subplots(figsize=(9, 8))
+ConfusionMatrixDisplay.from_predictions(y_te, pred, xticks_rotation=60, ax=ax, colorbar=False)
+ax.set_title(f"{args.tag}: character n-grams (test)")
+fig.tight_layout()  # adjust spacing so the rotated band names aren't cut off
+fig.savefig(out_dir / "confusion_matrix.png", dpi=150)
 
+# ---------------------------------------------------------------------------
+# look for most informative n-grams per band 
+# ---------------------------------------------------------------------------
+# Pull the two trained steps back out of the pipeline.
+vec, clf = final.named_steps["tfidf"], final.named_steps["clf"]
+
+# The list of every n-gram the vectorizer kept, in the same order as the
+# model's weights. 
+names = np.array(vec.get_feature_names_out())
+
+# clf.coef_ holds one row of weights per band. For each band:
+#   np.argsort(coefs)  -> positions of the weights, from lowest to highest
+#   [-15:]             -> the 15 highest-weighted positions
+#   [::-1]             -> reversed, so the strongest comes first
+# repr() wraps each n-gram in quotes so leading/trailing spaces are visible.
+top = {band: [repr(n) for n in names[np.argsort(coefs)[-15:][::-1]]]
+       for band, coefs in zip(clf.classes_, clf.coef_)}
+
+for band, grams in top.items():
+    print(f"{band:22} {' '.join(grams)}")
 

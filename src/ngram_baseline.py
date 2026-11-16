@@ -50,7 +50,7 @@ test = df[df["split"] == "test"]
 
 # X = the input text, y = the predicted band name
 X_tr, y_tr = train[args.text_col], train[args.label_col]
-X_val, y_tr = val[args.text_col], val[args.label_col]
+X_val, y_val = val[args.text_col], val[args.label_col]
 X_te, y_te = test[args.text_col], test[args.label_col]
 
 #-------------------------------------------------------------------------------------
@@ -79,3 +79,49 @@ def make_model(ngram_range, C):
         # C controls regularization - as C gets larger overfitting is more likely
         ("clf", LogisticRegression(C=C, max_iter=2000)),
     ])
+
+#-------------------------------------------------------------------------------------
+# Choose settings for n-gram lengths and C value
+#--------------------------------------------------------------------------------------
+search = []
+for ngram_range in [(2, 4), (3, 5)]:
+    for C in [1, 10, 100]:
+        model = make_model(ngram_range, C).fit(X_tr, y_tr)
+
+        # Macro-F1 averages the F1 score of each bank equally
+        # If only a single band is consistently scored wrong the entire score will come down
+        f1 = f1_score(y_val, model.predict(X_val), average="macro")
+
+        search.append({"ngram_range": list(ngram_range), "C": C, "val_macro_f1": round(f1, 4)})
+        print(f"ngrams={ngram_range} C={C:<4} val macro-F1={f1:.3f}")
+
+# Keep the combination with the highest validation macro-F1.
+best = max(search, key=lambda r: r["val_macro_f1"])
+print(f"\nBest on validation: {best}")
+
+#-------------------------------------------------------------------------------------
+# Train with best settings and score
+#--------------------------------------------------------------------------------------
+final = make_model(tuple(best["ngram_range"]), best["C"])
+# Add validation data to training data to maximize training data
+final.fit(pd.concat([X_tr, X_val]), pd.concat(y_tr, y_val))
+
+# Predict a band for every song in the test data
+pred = final.predict(X_te)
+
+# Accuracy: share of test songs assigned to the correct band.
+# Macro-F1: average per-band F1 
+# Chance: what random guessing would score (1 / number of bands = 10%).
+acc = accuracy_score(y_te, pred)
+macro_f1 = f1_score(y_te, pred, average="macro")
+print(f"\nTEST accuracy={acc:.3f}  macro-F1={macro_f1:.3f}  (chance = {1 / y_te.nunique():.3f})\n")
+
+# Per-band breakdown:
+#   precision: of the songs predicted as band X, how many really were X?
+#   recall:    of band's songs, how many did the model find?
+#   f1:        the balance of precision and recall
+#   support:   how many test songs that band has
+print(classification_report(y_te, pred, zero_division=0))
+
+
+

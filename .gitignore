@@ -22,6 +22,7 @@ __pycache__/
 *.pyc
 .ipynb_checkpoints/
 
+
 # R
 .Rhistory
 .RData
@@ -32,3 +33,6 @@ __pycache__/
 !.vscode/settings.json
 .DS_Store
 .vscode/
+
+# Results Files
+results/

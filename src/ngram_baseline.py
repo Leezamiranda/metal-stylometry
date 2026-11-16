@@ -25,7 +25,7 @@ from sklearn.pipeline import Pipeline
 parser = argparse.ArgumentParser()
 parser.add_argument("--tag", required=True, help="Death, Power, or Mixed")
 parser.add_argument("--cap", type=int, default=100)
-parser.add_argument("--text-col", default="lyrics", help="column holding the cleaned lyrics")
+parser.add_argument("--text-col", default="lyrics_clean", help="column holding the cleaned lyrics")
 parser.add_argument("--label-col", default="artist")
 args = parser.parse_args()
 
@@ -104,7 +104,7 @@ print(f"\nBest on validation: {best}")
 #--------------------------------------------------------------------------------------
 final = make_model(tuple(best["ngram_range"]), best["C"])
 # Add validation data to training data to maximize training data
-final.fit(pd.concat([X_tr, X_val]), pd.concat(y_tr, y_val))
+final.fit(pd.concat([X_tr, X_val]), pd.concat([y_tr, y_val]))
 
 # Predict a band for every song in the test data
 pred = final.predict(X_te)
@@ -156,3 +156,14 @@ top = {band: [repr(n) for n in names[np.argsort(coefs)[-15:][::-1]]]
 for band, grams in top.items():
     print(f"{band:22} {' '.join(grams)}")
 
+
+# ---------------------------------------------------------------------------
+# Save everything for report
+# ---------------------------------------------------------------------------
+# One JSON file per band set, so the three runs can be compared 
+
+json.dump({"tag": args.tag, "search": search, "best": best,
+           "test_accuracy": round(acc, 4), "test_macro_f1": round(macro_f1, 4),
+           "top_ngrams": top},
+          open(out_dir / "results.json", "w"), indent=2)
+print(f"\nSaved results and confusion matrix to {out_dir}/")

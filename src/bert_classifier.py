@@ -55,3 +55,31 @@ out_dir.mkdir(parents=True, exist_ok=True)
 if not torch.cuda.is_available():
     print("WARNING: no GPU found. In Colab: Runtime > Change runtime type > T4 GPU.")
 
+# ---------------------------------------------------------------------------
+# Load the data and separate the three splits
+# ---------------------------------------------------------------------------
+
+df = pd.read_parquet(data_path)
+if args.text_col not in df.columns:
+    raise SystemExit(f"No column '{args.text_col}'. Columns are: {list(df.columns)}")
+# prepare_data.py already assigned every song to a split, grouped by album,
+# so all songs from one album are in the same split
+#   train: the model learns from these songs
+#   val:   used to compare model settings 
+#   test:  scored only once at the very end 
+train = df[df["split"] == "train"]
+val = df[df["split"] == "val"]
+test = df[df["split"] == "test"]
+
+
+# Band names turn into numbers
+# sort to retain order on every run
+bands = sorted(df[args.label_col].unique())
+band2id = {b: i for i, b in enumerate(bands)}
+id2band = {i: b for b, i in band2id.items()}
+
+# tokenize lyrics
+tokenizer = AutoTokenizer.from_pretrained(args.model)
+
+
+

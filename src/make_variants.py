@@ -50,3 +50,32 @@ if args.text_col not in df.columns:
 
 MASK = "[MASK]"
 texts = df[args.text_col].fillna("")
+
+# ---------------------------------------------------------------------------
+# Normalization
+# ---------------------------------------------------------------------------
+# Remove formatting choices that likely come from whoever transcribed
+# the lyrics on Genius, not from the band. 
+#
+# Rules:
+#   - Every punctuation mark becomes a space. 
+#   - EXCEPTION: an apostrophe between two letters is kept.
+#   - Runs of whitespace collapse to a single space.
+#   - Capitalization is NOT changed. 
+#   - The [MASK] placeholder is protected
+
+APOSTROPHE_IN_WORD = re.compile(r"(?<=[A-Za-z])'(?=[A-Za-z])")
+NOT_WORD_CHAR = re.compile(r"[^\w\s\x00\x01]")  # \x00 = [MASK], \x01 = kept apostrophe
+WHITESPACE = re.compile(r"\s+")
+
+
+def normalize(text):
+    text = text.replace(MASK, " \x00 ")             # protect [MASK]
+    text = APOSTROPHE_IN_WORD.sub("\x01", text)      # protect in-word apostrophes
+    text = NOT_WORD_CHAR.sub(" ", text)              # all other punctuation -> space
+    text = text.replace("_", " ")                    # \w includes "_", drop it too
+    text = text.replace("\x01", "'").replace("\x00", MASK)  # restore protected bits
+    return WHITESPACE.sub(" ", text).strip()
+
+
+df["lyrics_norm"] = texts.apply(normalize)

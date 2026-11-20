@@ -29,3 +29,24 @@ import pandas as pd
 import spacy
 import spacy.lang.en.stop_words
 from sklearn.feature_extraction.text import TfidfVectorizer
+
+# Command line options
+parser = argparse.ArgumentParser()
+parser.add_argument("--tag", required=True, help="Death, Power, Mixed")
+parser.add_argument("--cap", type=int, default=100)
+parser.add_argument("--text-col", default="lyrics_clean", help="column holding cleaned lyrics")
+parser.add_argument("--label-col", default="artist")
+parser.add_argument("--top-k", type=int, default=20,
+                    help="how many band-specific words to mask per band")
+parser.add_argument("--min-songs", type=int, default=3,
+                    help="a word must appear in at least this many of a band's "
+                         "training songs to count as 'recurring'")
+args = parser.parse_args()
+
+data_path = Path(f"data/processed/dataset_{args.tag}_cap{args.cap}.parquet")
+df = pd.read_parquet(data_path)
+if args.text_col not in df.columns:
+    raise SystemExit(f"No column '{args.text_col}'. Columns are: {list(df.columns)}")
+
+MASK = "[MASK]"
+texts = df[args.text_col].fillna("")

@@ -79,3 +79,48 @@ def normalize(text):
 
 
 df["lyrics_norm"] = texts.apply(normalize)
+
+# ---------------------------------------------------------------------------
+# Find recurring band-specific words
+# ---------------------------------------------------------------------------
+# "Band-specific" = words one band uses more than the other bands in the set
+#
+# Only the training split is used to choose these words. If test
+# songs helped decide what to mask, the test set would no longer be unseen.
+
+train = df[df["split"] == "train"]
+
+# Class-based TF-IDF: join all of a band's training songs into one
+# document (one per band). 
+# A word then scores high for a band if it's frequent in that band's lyrics (TF) but appears in few
+# of the other bands' lyrics (IDF).
+band_docs = train.groupby(args.label_col)[args.text_col].apply(" ".join)
+vec = TfidfVectorizer(lowercase=True, token_pattern=r"(?u)\b[a-zA-Z][a-zA-Z']+\b",
+                      sublinear_tf=True)
+scores = vec.fit_transform(band_docs).toarray()
+vocab = np.array(vec.get_feature_names_out())
+
+# For each band, count how many of its training songs contain each word. 
+# A word must appear in at least --min-songs different songs.
+song_counts = {}
+for band, songs in train.groupby(args.label_col)[args.text_col]:
+    c = Counter()
+    for s in songs:
+        c.update(set(re.findall(r"[a-z][a-z']+", s.lower())))
+    song_counts[band] = c
+
+# spaCy's English stop-word list (about 300 function words and contractions).
+STOP_WORDS = spacy.lang.en.stop_words.STOP_WORDS
+
+band_words = {}
+for row, band in zip(scores, band_docs.index):
+    ranked = vocab[np.argsort(row)[::-1]]                 # highest score first
+    recurring = [w for w in ranked
+                 if song_counts[band][w] >= args.min_songs and w not in STOP_WORDS
+                 and "'" not in w]  
+    band_words[band] = recurring[:args.top_k]
+mask_vocab = {w for words in band_words.values() for w in words}
+
+print("Band-specific words to mask (from training songs only):")
+for band, words in band_words.items():
+    print(f"  {band:22} {', '.join(words)}")

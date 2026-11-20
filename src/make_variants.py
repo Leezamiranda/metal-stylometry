@@ -124,3 +124,26 @@ mask_vocab = {w for words in band_words.values() for w in words}
 print("Band-specific words to mask (from training songs only):")
 for band, words in band_words.items():
     print(f"  {band:22} {', '.join(words)}")
+
+# ---------------------------------------------------------------------------
+# Masking
+# ---------------------------------------------------------------------------
+# spaCy tags each word with its part of speech. PROPN = proper noun
+
+nlp = spacy.load("en_core_web_sm", disable=["parser", "ner", "lemmatizer"])
+
+
+def mask_doc(doc):
+    out = []
+    for tok in doc:
+        if tok.pos_ == "PROPN" or tok.lower_ in mask_vocab:
+            out.append(MASK + tok.whitespace_)
+        else:
+            out.append(tok.text_with_ws)
+    return "".join(out)
+
+
+# nlp.pipe processes songs in batches.
+# Masking runs on the ORIGINAL text, because punctuation and context help
+# the tagger identify proper nouns correctly.
+df["lyrics_masked"] = [mask_doc(d) for d in nlp.pipe(texts, batch_size=64)]

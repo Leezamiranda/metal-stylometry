@@ -84,8 +84,8 @@ def make_model(ngram_range, C):
 # Choose settings for n-gram lengths and C value
 #--------------------------------------------------------------------------------------
 search = []
-for ngram_range in [(2, 4), (3, 5)]:
-    for C in [1, 10, 100]:
+for ngram_range in [(2, 4), (3, 5), (4, 6)]:
+    for C in [1, 10, 25, 50, 75, 100]:
         model = make_model(ngram_range, C).fit(X_tr, y_tr)
 
         # Macro-F1 averages the F1 score of each bank equally

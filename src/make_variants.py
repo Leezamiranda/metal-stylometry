@@ -147,3 +147,35 @@ def mask_doc(doc):
 # Masking runs on the ORIGINAL text, because punctuation and context help
 # the tagger identify proper nouns correctly.
 df["lyrics_masked"] = [mask_doc(d) for d in nlp.pipe(texts, batch_size=64)]
+
+#----------------------------------------------------------------------------
+# Combine, report, and save
+# ---------------------------------------------------------------------------
+
+# Normalize the masked text
+df["lyrics_norm_masked"] = df["lyrics_masked"].apply(normalize)
+
+# Find how many words and/or punctuation markds were removed
+n_words = df["lyrics_norm"].str.split().str.len().sum()
+n_masked = df["lyrics_norm_masked"].str.count(re.escape(MASK)).sum()
+chars_before = texts.str.len().sum()
+punct_removed = texts.str.count(r"[^\w\s]").sum() - texts.str.count(r"(?<=[A-Za-z])'(?=[A-Za-z])").sum()
+print(f"\nNormalization removed {punct_removed:,} punctuation marks "
+      f"({punct_removed / chars_before:.1%} of characters)")
+print(f"Masking replaced {n_masked:,} of {n_words:,} words ({n_masked / n_words:.1%})")
+
+# Show one song before and after, so you can sanity-check the output.
+ex = df.iloc[0]
+for col in [args.text_col, "lyrics_norm", "lyrics_masked", "lyrics_norm_masked"]:
+    print(f"\n--- {col} ---\n{ex[col][:300]}")
+
+df.to_parquet(data_path, index=False)
+
+# Save the masked word lists next to the results.
+out_dir = Path("results/masking")
+out_dir.mkdir(parents=True, exist_ok=True)
+json.dump({"tag": args.tag, "top_k": args.top_k, "min_songs": args.min_songs,
+           "share_words_masked": round(float(n_masked / n_words), 4),
+           "band_words": band_words},
+          open(out_dir / f"{args.tag}_masked_words.json", "w"), indent=2)
+print(f"\nAdded lyrics_norm, lyrics_masked, lyrics_norm_masked to {data_path}")

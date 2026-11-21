@@ -31,8 +31,8 @@ args = parser.parse_args()
 
 data_path = Path(f"data/processed/dataset_{args.tag}_cap{args.cap}.parquet")
 
-# Each band set gets its own results folder so runs don't overwrite each other.
-out_dir = Path(f"results/ngram/{args.tag}")
+# Each band set and text version gets its own results folder so runs don't overwrite each other.
+out_dir = Path(f"results/ngram/{args.tag}/{args.text_col}")
 out_dir.mkdir(parents=True, exist_ok=True)
 
 df = pd.read_parquet(data_path)
@@ -123,6 +123,12 @@ print(f"\nTEST accuracy={acc:.3f}  macro-F1={macro_f1:.3f}  (chance = {1 / y_te.
 #   support:   how many test songs that band has
 print(classification_report(y_te, pred, zero_division=0))
 
+# Save one row per test song (no lyrics), so misclassified songs can be
+# looked up and read later. song_title is included if the dataset has it.
+id_cols = [c for c in ["song_title", "album"] if c in test.columns]
+pd.DataFrame({**{c: test[c].values for c in id_cols},
+              "true": y_te.values, "pred": pred,
+              "correct": y_te.values == pred}).to_csv(out_dir / "predictions.csv", index=False)
 # ---------------------------------------------------------------------------
 # Confusion matrix
 # ---------------------------------------------------------------------------

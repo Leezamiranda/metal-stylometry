@@ -47,8 +47,8 @@ args = parser.parse_args()
 set_seed(args.seed)
 
 data_path = Path(f"data/processed/dataset_{args.tag}_cap{args.cap}.parquet")
-# Each band set gets its own results folder so runs don't overwrite each other.
-out_dir = Path(f"results/bert/{args.tag}/seed{args.seed}")
+# Each band and text version set gets its own results folder so runs don't overwrite each other.
+out_dir = Path(f"results/bert/{args.tag}/{args.text_col}/seed{args.seed}")
 out_dir.mkdir(parents=True, exist_ok=True)
 
 # Warn early if there is no GPU
@@ -194,6 +194,12 @@ acc = accuracy_score(y_te, pred)
 macro_f1 = f1_score(y_te, pred, average="macro")
 print(f"\nTEST accuracy={acc:.3f}  macro-F1={macro_f1:.3f}  (chance = {1 / len(bands):.3f})\n")
 print(classification_report(y_te, pred, zero_division=0))
+
+# Save one row per test song (no lyrics) for looking up misclassified songs.
+id_cols = [c for c in ["song_title", "album"] if c in test.columns]
+pd.DataFrame({**{c: test[c].values for c in id_cols},
+              "true": y_te, "pred": pred,
+              "correct": [t == p for t, p in zip(y_te, pred)]}).to_csv(out_dir / "predictions.csv", index=False)
 
 # ---------------------------------------------------------------------------
 # Confusion matrix

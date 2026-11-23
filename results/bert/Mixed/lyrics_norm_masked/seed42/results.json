@@ -1,0 +1,46 @@
+{
+  "tag": "Mixed",
+  "model": "distilbert-base-cased",
+  "seed": 42,
+  "settings": {
+    "epochs": 5,
+    "lr": 3e-05,
+    "batch_size": 16,
+    "max_len": 512
+  },
+  "truncated_share": 0.025,
+  "epochs": [
+    {
+      "epoch": 1.0,
+      "val_macro_f1": 0.2466,
+      "val_accuracy": 0.2788
+    },
+    {
+      "epoch": 2.0,
+      "val_macro_f1": 0.3995,
+      "val_accuracy": 0.4423
+    },
+    {
+      "epoch": 3.0,
+      "val_macro_f1": 0.4717,
+      "val_accuracy": 0.5
+    },
+    {
+      "epoch": 4.0,
+      "val_macro_f1": 0.4744,
+      "val_accuracy": 0.5096
+    },
+    {
+      "epoch": 5.0,
+      "val_macro_f1": 0.5123,
+      "val_accuracy": 0.5288
+    }
+  ],
+  "best": {
+    "epoch": 5.0,
+    "val_macro_f1": 0.5123,
+    "val_accuracy": 0.5288
+  },
+  "test_accuracy": 0.5528,
+  "test_macro_f1": 0.5219
+}

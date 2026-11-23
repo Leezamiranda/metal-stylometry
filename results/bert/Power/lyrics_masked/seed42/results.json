@@ -1,0 +1,46 @@
+{
+  "tag": "Power",
+  "model": "distilbert-base-cased",
+  "seed": 42,
+  "settings": {
+    "epochs": 5,
+    "lr": 3e-05,
+    "batch_size": 16,
+    "max_len": 512
+  },
+  "truncated_share": 0.051,
+  "epochs": [
+    {
+      "epoch": 1.0,
+      "val_macro_f1": 0.3111,
+      "val_accuracy": 0.38
+    },
+    {
+      "epoch": 2.0,
+      "val_macro_f1": 0.3874,
+      "val_accuracy": 0.43
+    },
+    {
+      "epoch": 3.0,
+      "val_macro_f1": 0.4593,
+      "val_accuracy": 0.5
+    },
+    {
+      "epoch": 4.0,
+      "val_macro_f1": 0.4839,
+      "val_accuracy": 0.5
+    },
+    {
+      "epoch": 5.0,
+      "val_macro_f1": 0.5055,
+      "val_accuracy": 0.52
+    }
+  ],
+  "best": {
+    "epoch": 5.0,
+    "val_macro_f1": 0.5055,
+    "val_accuracy": 0.52
+  },
+  "test_accuracy": 0.5657,
+  "test_macro_f1": 0.5527
+}

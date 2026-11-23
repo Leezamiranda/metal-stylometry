@@ -1,0 +1,235 @@
+{
+  "tag": "Power",
+  "search": [
+    {
+      "ngram_range": [
+        2,
+        4
+      ],
+      "C": 1,
+      "val_macro_f1": 0.5724
+    },
+    {
+      "ngram_range": [
+        2,
+        4
+      ],
+      "C": 10,
+      "val_macro_f1": 0.5975
+    },
+    {
+      "ngram_range": [
+        2,
+        4
+      ],
+      "C": 100,
+      "val_macro_f1": 0.605
+    },
+    {
+      "ngram_range": [
+        3,
+        5
+      ],
+      "C": 1,
+      "val_macro_f1": 0.5706
+    },
+    {
+      "ngram_range": [
+        3,
+        5
+      ],
+      "C": 10,
+      "val_macro_f1": 0.5777
+    },
+    {
+      "ngram_range": [
+        3,
+        5
+      ],
+      "C": 100,
+      "val_macro_f1": 0.5798
+    }
+  ],
+  "best": {
+    "ngram_range": [
+      2,
+      4
+    ],
+    "C": 100,
+    "val_macro_f1": 0.605
+  },
+  "test_accuracy": 0.7778,
+  "test_macro_f1": 0.7796,
+  "top_ngrams": {
+    "Blind Guardian": [
+      "\"y'\"",
+      "'Hall'",
+      "\"e's \"",
+      "\"e's\"",
+      "'d Th'",
+      "'Hal'",
+      "' it '",
+      "'d T'",
+      "' Hal'",
+      "' it'",
+      "'ll c'",
+      "'re i'",
+      "' B'",
+      "'it '",
+      "'r S'"
+    ],
+    "Bloodbound": [
+      "'In t'",
+      "' In '",
+      "'len '",
+      "'line'",
+      "'hell'",
+      "' evi'",
+      "' In'",
+      "'In '",
+      "'vil '",
+      "' lin'",
+      "'In'",
+      "'n ev'",
+      "'llen'",
+      "'vil'",
+      "' ev'"
+    ],
+    "Elvenking": [
+      "'\" '",
+      "' \"'",
+      "'eah'",
+      "'! '",
+      "'ars'",
+      "'yeah'",
+      "'tars'",
+      "'eah '",
+      "'oti'",
+      "'res'",
+      "'whi'",
+      "'tar'",
+      "' whi'",
+      "'nsi'",
+      "'agan'"
+    ],
+    "Freedom Call": [
+      "'of l'",
+      "'f li'",
+      "'f l'",
+      "'rad'",
+      "'worl'",
+      "'orld'",
+      "'rld'",
+      "'rld '",
+      "'orl'",
+      "'radi'",
+      "' ('",
+      "'rl'",
+      "') '",
+      "'h, '",
+      "'h,'"
+    ],
+    "Grave Digger": [
+      "' dea'",
+      "' hat'",
+      "'kill'",
+      "'kil'",
+      "'Sc'",
+      "'dea'",
+      "'war '",
+      "'loo'",
+      "' Sc'",
+      "'dead'",
+      "'hate'",
+      "'ape'",
+      "'lood'",
+      "'ie '",
+      "' K'"
+    ],
+    "HammerFall": [
+      "'e, '",
+      "'e,'",
+      "'amm'",
+      "'amme'",
+      "'mm'",
+      "' - '",
+      "' -'",
+      "'- '",
+      "'ghti'",
+      "'hti'",
+      "'ge,'",
+      "'ge, '",
+      "'Come'",
+      "' or '",
+      "', '"
+    ],
+    "Helloween": [
+      "' go '",
+      "'go '",
+      "'? '",
+      "'anna'",
+      "'wann'",
+      "' any'",
+      "\"n't \"",
+      "'No '",
+      "'w wh'",
+      "\"'t \"",
+      "\"n't\"",
+      "'woul'",
+      "'nna '",
+      "' No '",
+      "'nna'"
+    ],
+    "Iced Earth": [
+      "' ('",
+      "') '",
+      "'rage'",
+      "'aaaa'",
+      "'aaa'",
+      "'uman'",
+      "'aa'",
+      "'man'",
+      "'uma'",
+      "'ati'",
+      "'huma'",
+      "'man '",
+      "'hum'",
+      "' man'",
+      "'ues'"
+    ],
+    "Kamelot": [
+      "'ait'",
+      "' Lik'",
+      "'wait'",
+      "'Like'",
+      "'Lik'",
+      "'wai'",
+      "' me '",
+      "'se w'",
+      "'n is'",
+      "' nam'",
+      "'name'",
+      "'hes'",
+      "'nam'",
+      "'as '",
+      "'But '"
+    ],
+    "Rage": [
+      "'t w'",
+      "'nt t'",
+      "'when'",
+      "'t we'",
+      "'want'",
+      "' it '",
+      "'s wa'",
+      "' it'",
+      "' dea'",
+      "' tha'",
+      "'tha'",
+      "'dea'",
+      "'it '",
+      "'..'",
+      "'t wa'"
+    ]
+  }
+}

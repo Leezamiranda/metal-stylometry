@@ -1,0 +1,331 @@
+{
+  "tag": "Power",
+  "search": [
+    {
+      "ngram_range": [
+        2,
+        4
+      ],
+      "C": 1,
+      "val_macro_f1": 0.5758
+    },
+    {
+      "ngram_range": [
+        2,
+        4
+      ],
+      "C": 10,
+      "val_macro_f1": 0.612
+    },
+    {
+      "ngram_range": [
+        2,
+        4
+      ],
+      "C": 25,
+      "val_macro_f1": 0.6091
+    },
+    {
+      "ngram_range": [
+        2,
+        4
+      ],
+      "C": 50,
+      "val_macro_f1": 0.6208
+    },
+    {
+      "ngram_range": [
+        2,
+        4
+      ],
+      "C": 75,
+      "val_macro_f1": 0.6187
+    },
+    {
+      "ngram_range": [
+        2,
+        4
+      ],
+      "C": 100,
+      "val_macro_f1": 0.6187
+    },
+    {
+      "ngram_range": [
+        3,
+        5
+      ],
+      "C": 1,
+      "val_macro_f1": 0.5552
+    },
+    {
+      "ngram_range": [
+        3,
+        5
+      ],
+      "C": 10,
+      "val_macro_f1": 0.6062
+    },
+    {
+      "ngram_range": [
+        3,
+        5
+      ],
+      "C": 25,
+      "val_macro_f1": 0.5921
+    },
+    {
+      "ngram_range": [
+        3,
+        5
+      ],
+      "C": 50,
+      "val_macro_f1": 0.5963
+    },
+    {
+      "ngram_range": [
+        3,
+        5
+      ],
+      "C": 75,
+      "val_macro_f1": 0.586
+    },
+    {
+      "ngram_range": [
+        3,
+        5
+      ],
+      "C": 100,
+      "val_macro_f1": 0.5951
+    },
+    {
+      "ngram_range": [
+        4,
+        6
+      ],
+      "C": 1,
+      "val_macro_f1": 0.5663
+    },
+    {
+      "ngram_range": [
+        4,
+        6
+      ],
+      "C": 10,
+      "val_macro_f1": 0.5468
+    },
+    {
+      "ngram_range": [
+        4,
+        6
+      ],
+      "C": 25,
+      "val_macro_f1": 0.5592
+    },
+    {
+      "ngram_range": [
+        4,
+        6
+      ],
+      "C": 50,
+      "val_macro_f1": 0.5383
+    },
+    {
+      "ngram_range": [
+        4,
+        6
+      ],
+      "C": 75,
+      "val_macro_f1": 0.5485
+    },
+    {
+      "ngram_range": [
+        4,
+        6
+      ],
+      "C": 100,
+      "val_macro_f1": 0.561
+    }
+  ],
+  "best": {
+    "ngram_range": [
+      2,
+      4
+    ],
+    "C": 50,
+    "val_macro_f1": 0.6208
+  },
+  "test_accuracy": 0.7424,
+  "test_macro_f1": 0.7439,
+  "top_ngrams": {
+    "Blind Guardian": [
+      "\"y'\"",
+      "'Hall'",
+      "' it '",
+      "'Hal'",
+      "'d Th'",
+      "\"e's \"",
+      "\"e's\"",
+      "' Hal'",
+      "'d T'",
+      "' it'",
+      "'r S'",
+      "'ll c'",
+      "'ar b'",
+      "'re i'",
+      "' B'"
+    ],
+    "Bloodbound": [
+      "'In t'",
+      "' In '",
+      "'line'",
+      "'hell'",
+      "'len '",
+      "'In '",
+      "' In'",
+      "' evi'",
+      "' lin'",
+      "'In'",
+      "'vil '",
+      "'d he'",
+      "'fly '",
+      "'n ev'",
+      "'llen'"
+    ],
+    "Elvenking": [
+      "'eah '",
+      "'eah'",
+      "'ars'",
+      "'tars'",
+      "'yeah'",
+      "' whi'",
+      "'tar'",
+      "'agan'",
+      "'lt'",
+      "'oti'",
+      "'e Mo'",
+      "'whi'",
+      "'of w'",
+      "'nsi'",
+      "'ars '"
+    ],
+    "Freedom Call": [
+      "'of l'",
+      "'f li'",
+      "'f l'",
+      "'rad'",
+      "'rld '",
+      "'worl'",
+      "'rld'",
+      "'orld'",
+      "'orl'",
+      "'radi'",
+      "'rl'",
+      "'adis'",
+      "'dise'",
+      "'arad'",
+      "'oah'"
+    ],
+    "Grave Digger": [
+      "' dea'",
+      "'kil'",
+      "'kill'",
+      "' hat'",
+      "'Sc'",
+      "'dea'",
+      "'ape'",
+      "'dead'",
+      "' Sc'",
+      "'hate'",
+      "'loo'",
+      "'war '",
+      "'lood'",
+      "'ie '",
+      "'die'"
+    ],
+    "HammerFall": [
+      "'amm'",
+      "'amme'",
+      "'mm'",
+      "'hti'",
+      "'ghti'",
+      "' or '",
+      "'mmer'",
+      "'Come'",
+      "'e fu'",
+      "'use '",
+      "'mme'",
+      "' one'",
+      "'htin'",
+      "'he f'",
+      "'stee'"
+    ],
+    "Helloween": [
+      "' go '",
+      "'go '",
+      "'re y'",
+      "'wann'",
+      "'anna'",
+      "' any'",
+      "'w wh'",
+      "\"n't\"",
+      "\"'t \"",
+      "\"n't \"",
+      "\"'t\"",
+      "'woul'",
+      "'nna '",
+      "'No '",
+      "'nna'"
+    ],
+    "Iced Earth": [
+      "'aaaa'",
+      "'aaa'",
+      "'aa'",
+      "'rage'",
+      "'man'",
+      "'uman'",
+      "'uma'",
+      "'huma'",
+      "'man '",
+      "' man'",
+      "'hum'",
+      "'ati'",
+      "' hum'",
+      "'For '",
+      "'ues'"
+    ],
+    "Kamelot": [
+      "'ait'",
+      "' Lik'",
+      "'Lik'",
+      "'Like'",
+      "'wait'",
+      "'wai'",
+      "'se w'",
+      "' nam'",
+      "'name'",
+      "'nam'",
+      "'as '",
+      "'hes'",
+      "'n is'",
+      "' me '",
+      "' But'"
+    ],
+    "Rage": [
+      "'nt t'",
+      "'when'",
+      "'t w'",
+      "'want'",
+      "'t we'",
+      "'e it'",
+      "' it '",
+      "'it '",
+      "' it'",
+      "' dea'",
+      "'dea'",
+      "'s wa'",
+      "'tha'",
+      "'r da'",
+      "' tha'"
+    ]
+  }
+}

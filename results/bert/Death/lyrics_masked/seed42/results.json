@@ -1,0 +1,46 @@
+{
+  "tag": "Death",
+  "model": "distilbert-base-cased",
+  "seed": 42,
+  "settings": {
+    "epochs": 5,
+    "lr": 3e-05,
+    "batch_size": 16,
+    "max_len": 512
+  },
+  "truncated_share": 0.005,
+  "epochs": [
+    {
+      "epoch": 1.0,
+      "val_macro_f1": 0.2312,
+      "val_accuracy": 0.2941
+    },
+    {
+      "epoch": 2.0,
+      "val_macro_f1": 0.5502,
+      "val_accuracy": 0.5686
+    },
+    {
+      "epoch": 3.0,
+      "val_macro_f1": 0.5951,
+      "val_accuracy": 0.6176
+    },
+    {
+      "epoch": 4.0,
+      "val_macro_f1": 0.6319,
+      "val_accuracy": 0.6471
+    },
+    {
+      "epoch": 5.0,
+      "val_macro_f1": 0.6122,
+      "val_accuracy": 0.6275
+    }
+  ],
+  "best": {
+    "epoch": 4.0,
+    "val_macro_f1": 0.6319,
+    "val_accuracy": 0.6471
+  },
+  "test_accuracy": 0.635,
+  "test_macro_f1": 0.6228
+}

@@ -1,0 +1,331 @@
+{
+  "tag": "Mixed",
+  "search": [
+    {
+      "ngram_range": [
+        2,
+        4
+      ],
+      "C": 1,
+      "val_macro_f1": 0.7012
+    },
+    {
+      "ngram_range": [
+        2,
+        4
+      ],
+      "C": 10,
+      "val_macro_f1": 0.7113
+    },
+    {
+      "ngram_range": [
+        2,
+        4
+      ],
+      "C": 25,
+      "val_macro_f1": 0.7049
+    },
+    {
+      "ngram_range": [
+        2,
+        4
+      ],
+      "C": 50,
+      "val_macro_f1": 0.7049
+    },
+    {
+      "ngram_range": [
+        2,
+        4
+      ],
+      "C": 75,
+      "val_macro_f1": 0.7049
+    },
+    {
+      "ngram_range": [
+        2,
+        4
+      ],
+      "C": 100,
+      "val_macro_f1": 0.6913
+    },
+    {
+      "ngram_range": [
+        3,
+        5
+      ],
+      "C": 1,
+      "val_macro_f1": 0.6943
+    },
+    {
+      "ngram_range": [
+        3,
+        5
+      ],
+      "C": 10,
+      "val_macro_f1": 0.6694
+    },
+    {
+      "ngram_range": [
+        3,
+        5
+      ],
+      "C": 25,
+      "val_macro_f1": 0.6706
+    },
+    {
+      "ngram_range": [
+        3,
+        5
+      ],
+      "C": 50,
+      "val_macro_f1": 0.6785
+    },
+    {
+      "ngram_range": [
+        3,
+        5
+      ],
+      "C": 75,
+      "val_macro_f1": 0.696
+    },
+    {
+      "ngram_range": [
+        3,
+        5
+      ],
+      "C": 100,
+      "val_macro_f1": 0.6602
+    },
+    {
+      "ngram_range": [
+        4,
+        6
+      ],
+      "C": 1,
+      "val_macro_f1": 0.6748
+    },
+    {
+      "ngram_range": [
+        4,
+        6
+      ],
+      "C": 10,
+      "val_macro_f1": 0.6831
+    },
+    {
+      "ngram_range": [
+        4,
+        6
+      ],
+      "C": 25,
+      "val_macro_f1": 0.6824
+    },
+    {
+      "ngram_range": [
+        4,
+        6
+      ],
+      "C": 50,
+      "val_macro_f1": 0.6932
+    },
+    {
+      "ngram_range": [
+        4,
+        6
+      ],
+      "C": 75,
+      "val_macro_f1": 0.6932
+    },
+    {
+      "ngram_range": [
+        4,
+        6
+      ],
+      "C": 100,
+      "val_macro_f1": 0.6783
+    }
+  ],
+  "best": {
+    "ngram_range": [
+      2,
+      4
+    ],
+    "C": 10,
+    "val_macro_f1": 0.7113
+  },
+  "test_accuracy": 0.6583,
+  "test_macro_f1": 0.6504,
+  "top_ngrams": {
+    "Accept": [
+      "'eart'",
+      "\" It'\"",
+      "\"It'\"",
+      "\" We'\"",
+      "\"We'\"",
+      "\"It's\"",
+      "'been'",
+      "'rock'",
+      "' roc'",
+      "'It'",
+      "'roc'",
+      "' It'",
+      "'ime'",
+      "'\u00b9s'",
+      "'\u00b9s '"
+    ],
+    "Black Label Society": [
+      "' onc'",
+      "'once'",
+      "'onc'",
+      "\"in't\"",
+      "\"in'\"",
+      "'For'",
+      "' For'",
+      "'Fo'",
+      "' Fo'",
+      "'eyo'",
+      "'eyon'",
+      "'yond'",
+      "' ain'",
+      "\"ain'\"",
+      "'no ['"
+    ],
+    "GWAR": [
+      "'aby '",
+      "'baby'",
+      "'ab'",
+      "'aby'",
+      "' bab'",
+      "'bab'",
+      "' blo'",
+      "'blo'",
+      "'Your'",
+      "'b '",
+      "'og'",
+      "'] [M'",
+      "'] ['",
+      "'K] ['",
+      "'by '"
+    ],
+    "Iron Maiden": [
+      "'t is'",
+      "' men'",
+      "' str'",
+      "'K] o'",
+      "'] o'",
+      "'stra'",
+      "' our'",
+      "'Out '",
+      "'at i'",
+      "'men '",
+      "'] of'",
+      "' Out'",
+      "'ange'",
+      "'rth'",
+      "' Is '"
+    ],
+    "King Diamond": [
+      "' her'",
+      "' she'",
+      "'she '",
+      "'ittl'",
+      "'must'",
+      "' hou'",
+      "'her '",
+      "'I se'",
+      "'s in'",
+      "'her'",
+      "'is s'",
+      "'mus'",
+      "' mus'",
+      "'she'",
+      "'itt'"
+    ],
+    "Korn": [
+      "'I c'",
+      "'I ca'",
+      "' I c'",
+      "'me I'",
+      "' me '",
+      "'g me'",
+      "'this'",
+      "' thi'",
+      "'hurt'",
+      "'me T'",
+      "'urt '",
+      "'t me'",
+      "'urt'",
+      "'ythi'",
+      "' I t'"
+    ],
+    "Megadeth": [
+      "'ny'",
+      "'lt f'",
+      "' any'",
+      "'when'",
+      "'any'",
+      "'I lo'",
+      "'t m'",
+      "'t do'",
+      "'ose'",
+      "' I l'",
+      "'ist'",
+      "'its '",
+      "'ex'",
+      "'ade'",
+      "'oi'"
+    ],
+    "Sevendust": [
+      "'So '",
+      "' So '",
+      "'So'",
+      "' So'",
+      "'elf'",
+      "'rsel'",
+      "' now'",
+      "'self'",
+      "'sel'",
+      "'Tha'",
+      "' Tha'",
+      "'ong '",
+      "'now '",
+      "'ay I'",
+      "'elf '"
+    ],
+    "Venom": [
+      "'ur s'",
+      "' de'",
+      "'cti'",
+      "'fire'",
+      "'fir'",
+      "'cal'",
+      "'ngel'",
+      "'n ['",
+      "'n [M'",
+      "'gel'",
+      "'tal'",
+      "' his'",
+      "'] re'",
+      "' cal'",
+      "'sh '"
+    ],
+    "W.A.S.P.": [
+      "\"] I'\"",
+      "'aus'",
+      "'ause'",
+      "'Caus'",
+      "' Cau'",
+      "\" I'm\"",
+      "\"I'm \"",
+      "\"I'm\"",
+      "'Cau'",
+      "\"'m \"",
+      "\"'m\"",
+      "\" I'\"",
+      "\"I'\"",
+      "'r kn'",
+      "'se I'"
+    ]
+  }
+}

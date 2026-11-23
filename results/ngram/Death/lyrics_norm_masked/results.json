@@ -1,0 +1,331 @@
+{
+  "tag": "Death",
+  "search": [
+    {
+      "ngram_range": [
+        2,
+        4
+      ],
+      "C": 1,
+      "val_macro_f1": 0.7417
+    },
+    {
+      "ngram_range": [
+        2,
+        4
+      ],
+      "C": 10,
+      "val_macro_f1": 0.7645
+    },
+    {
+      "ngram_range": [
+        2,
+        4
+      ],
+      "C": 25,
+      "val_macro_f1": 0.7518
+    },
+    {
+      "ngram_range": [
+        2,
+        4
+      ],
+      "C": 50,
+      "val_macro_f1": 0.7527
+    },
+    {
+      "ngram_range": [
+        2,
+        4
+      ],
+      "C": 75,
+      "val_macro_f1": 0.7527
+    },
+    {
+      "ngram_range": [
+        2,
+        4
+      ],
+      "C": 100,
+      "val_macro_f1": 0.7527
+    },
+    {
+      "ngram_range": [
+        3,
+        5
+      ],
+      "C": 1,
+      "val_macro_f1": 0.7191
+    },
+    {
+      "ngram_range": [
+        3,
+        5
+      ],
+      "C": 10,
+      "val_macro_f1": 0.7481
+    },
+    {
+      "ngram_range": [
+        3,
+        5
+      ],
+      "C": 25,
+      "val_macro_f1": 0.7481
+    },
+    {
+      "ngram_range": [
+        3,
+        5
+      ],
+      "C": 50,
+      "val_macro_f1": 0.7481
+    },
+    {
+      "ngram_range": [
+        3,
+        5
+      ],
+      "C": 75,
+      "val_macro_f1": 0.7481
+    },
+    {
+      "ngram_range": [
+        3,
+        5
+      ],
+      "C": 100,
+      "val_macro_f1": 0.7481
+    },
+    {
+      "ngram_range": [
+        4,
+        6
+      ],
+      "C": 1,
+      "val_macro_f1": 0.7364
+    },
+    {
+      "ngram_range": [
+        4,
+        6
+      ],
+      "C": 10,
+      "val_macro_f1": 0.7461
+    },
+    {
+      "ngram_range": [
+        4,
+        6
+      ],
+      "C": 25,
+      "val_macro_f1": 0.7461
+    },
+    {
+      "ngram_range": [
+        4,
+        6
+      ],
+      "C": 50,
+      "val_macro_f1": 0.7461
+    },
+    {
+      "ngram_range": [
+        4,
+        6
+      ],
+      "C": 75,
+      "val_macro_f1": 0.7461
+    },
+    {
+      "ngram_range": [
+        4,
+        6
+      ],
+      "C": 100,
+      "val_macro_f1": 0.7461
+    }
+  ],
+  "best": {
+    "ngram_range": [
+      2,
+      4
+    ],
+    "C": 10,
+    "val_macro_f1": 0.7645
+  },
+  "test_accuracy": 0.795,
+  "test_macro_f1": 0.79,
+  "top_ngrams": {
+    "Cannibal Corpse": [
+      "' mu'",
+      "'hey '",
+      "'mu'",
+      "'hem '",
+      "'They'",
+      "'hey'",
+      "'them'",
+      "'hem'",
+      "'ey '",
+      "'bod'",
+      "'em '",
+      "' bod'",
+      "' kil'",
+      "'bodi'",
+      "'nsa'"
+    ],
+    "Deicide": [
+      "' his'",
+      "'f [M'",
+      "'f ['",
+      "'of ['",
+      "'oss '",
+      "' hi'",
+      "'vil '",
+      "'oss'",
+      "'cros'",
+      "'Dea'",
+      "'ross'",
+      "' fai'",
+      "'fai'",
+      "'you '",
+      "'een '"
+    ],
+    "Immolation": [
+      "' us '",
+      "' our'",
+      "' us'",
+      "\"'ve\"",
+      "\"'ve \"",
+      "\"'v\"",
+      "' ou'",
+      "'us '",
+      "'hem '",
+      "'them'",
+      "' Our'",
+      "'Our '",
+      "'Our'",
+      "'hem'",
+      "'em '"
+    ],
+    "Incantation": [
+      "'oly'",
+      "'holy'",
+      "'eir '",
+      "'heir'",
+      "'eir'",
+      "'oly '",
+      "'ail'",
+      "'hei'",
+      "'ir '",
+      "'ei'",
+      "'aris'",
+      "' et'",
+      "'emon'",
+      "' dem'",
+      "' ari'"
+    ],
+    "Krisiun": [
+      "'nf'",
+      "'atio'",
+      "'nat'",
+      "'inf'",
+      "'ati'",
+      "'f th'",
+      "'s of'",
+      "'of t'",
+      "'ul ['",
+      "'nati'",
+      "'f d'",
+      "'of d'",
+      "\"'m t\"",
+      "'f t'",
+      "' inf'"
+    ],
+    "Malevolent Creation": [
+      "'live'",
+      "'liv'",
+      "'K] f'",
+      "'] f'",
+      "'opp'",
+      "'your'",
+      "'ped '",
+      "' ac'",
+      "'ped'",
+      "'nt t'",
+      "'oppo'",
+      "'e N'",
+      "'ives'",
+      "' No'",
+      "'No '"
+    ],
+    "Napalm Death": [
+      "'a p'",
+      "' a p'",
+      "'han '",
+      "'ot t'",
+      "'tiv'",
+      "' a '",
+      "'act'",
+      "'we '",
+      "'a '",
+      "'dge'",
+      "'dg'",
+      "' we '",
+      "'tive'",
+      "'than'",
+      "' we'"
+    ],
+    "Six Feet Under": [
+      "' kil'",
+      "'kill'",
+      "'kil'",
+      "'dead'",
+      "'bone'",
+      "'na '",
+      "'nig'",
+      "'to k'",
+      "' bon'",
+      "'gonn'",
+      "' dea'",
+      "'o ki'",
+      "'bon'",
+      "'nna '",
+      "'nigh'"
+    ],
+    "Unleashed": [
+      "'all '",
+      "'So '",
+      "' So '",
+      "'tle '",
+      "'And'",
+      "'And '",
+      "' And'",
+      "'ttle'",
+      "'ttl'",
+      "' An'",
+      "'An'",
+      "'all'",
+      "' am '",
+      "'batt'",
+      "' So'"
+    ],
+    "Vader": [
+      "' and'",
+      "' And'",
+      "'And'",
+      "'And '",
+      "'An'",
+      "' go'",
+      "'go'",
+      "' An'",
+      "' Lik'",
+      "'Lik'",
+      "'Like'",
+      "'touc'",
+      "'l an'",
+      "'ire '",
+      "' All'"
+    ]
+  }
+}

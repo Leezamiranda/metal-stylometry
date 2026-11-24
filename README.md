@@ -1,278 +1,341 @@
 # Metal lyrics stylometry
 
-Author attribution on metal song lyrics: a classic stylometric baseline
-(function-word / character n-gram features + logistic regression or SVM, and
-Burrows' Delta) compared with a fine-tuned DistilBERT classifier. Metrics:
-accuracy, macro-F1, confusion matrix. To test whether the classifiers pick up
-style or shared subject matter, the same pipeline is run on three band sets
-(10 bands x 100 songs each): a mixed sub-genre set and two narrower
-ones, death metal and power metal (see [Band sets](#band-sets)).
+This project asks whether text classifiers can identify a metal band from its
+lyrics by writing style, or only by subject matter. A character n-gram model
+and a fine-tuned DistilBERT model are trained on three sets of 10 bands, with
+the lyrics in four versions that remove topic words, transcription-dependent
+punctuation, or both. The n-gram model outperforms DistilBERT in every
+condition. Masking topic words lowers DistilBERT's score on the topically
+mixed set by about 0.17 macro-F1 but barely affects the n-gram model, and all
+scores stay far above chance (0.10) after both changes.
 
-Data: `corpus_metal_lyrics` from the R package
-[text2map.corpora](https://gitlab.com/culturalcartography/text2map.corpora),
-which holds ~193k English-language songs scraped from Genius.
+## Research question and motivation
 
-## Regenerating the data
+Authorship attribution assumes that a classifier learns how an author writes.
+Metal is a hard test of that assumption: subgenres concentrate on a few lyric
+topics, so a classifier can succeed by recognizing what a band
+writes about (gore, Satan, dragons, battles) instead of how it writes. The
+project compares a topically mixed set of bands with two topically narrower
+sets, death metal and power metal. If accuracy holds up in the narrow sets
+and after topic words are masked, the models are using more than topic.
+Having two narrow sets acts as a replication.
 
-The `data/` directory is not in Git (see `.gitignore`). The lyrics are copyrighted
-texts and too large to commit, so anyone cloning the repo rebuilds them:
+A second question was added after instructor feedback. The lyrics are
+crowd-transcribed on Genius, so punctuation may reflect the person who
+transcribed a song rather than the band. Normalizing punctuation tests how
+much of the signal depends on it.
+
+## Data
+
+### Source
+
+The data is the Metal Lyrics Corpus (`corpus_metal_lyrics`) from the R package
+[text2map.corpora](https://gitlab.com/culturalcartography/text2map.corpora):
+193,623 rows of English-language song lyrics scraped from Genius, with artist,
+album, year, and genre labels. The lyrics are copyrighted, so neither the
+corpus nor the derived datasets are included in this repository; the
+`data/` folder is gitignored and is rebuilt with the commands under
+[Reproducing the results](#reproducing-the-results).
+
+### Cleaning
+
+`src/prepare_data.py` cleans the corpus in the following steps (counts are
+from `data/processed/cleaning_report.json`):
+
+| Step | Rows removed |
+|---|---|
+| 1. Duplicate rows: the corpus was scraped genre by genre, so an album tagged with k genres appears k times. One row per lyrics URL is kept, with all its genre labels joined. | 41,813 (21.6%) |
+| 4. Songs with fewer than 30 words after cleaning (instrumentals, placeholders, fragments) | 1,912 |
+| 5. Covers: songs that largely contain an earlier song by another artist, or have "cover" in the title | 433 |
+| 6. Near-duplicates by the same artist (re-recordings, live and acoustic versions); only the earliest version is kept | 847 |
+| 7. Alternate versions identified by title, e.g. "Song (Live)" when "Song" is also present | 28 |
+
+Steps 5-7 compare songs as sets of word 5-grams and use containment,
+`|A ∩ B| / min(|A|, |B|)`, rather than Jaccard similarity, because a live
+version with extra chorus repeats still contains the original. They run only
+for artists with enough songs to be candidates (at least 50).
+
+Text cleaning (steps 2-3) starts from the raw `lyrics` column, not the
+corpus's `lyrics_prepped`, which is lowercased and stripped of punctuation and
+contractions. The rule is to remove text the band did not write and leave the
+band's own text unchanged (case, punctuation, contractions, repeated choruses):
+
+- Genius page headers (contributor counts, translation lists, "<Title>
+  Lyrics"), which would leak the song title into the features.
+- Genius "About" blurbs written by site users.
+- All bracketed section tags such as `[Chorus]` or `[Verse 2: <name>]`. Many
+  name band members, which would leak the label directly.
+- Old-style directions such as `(Chorus)` or `(x2)`.
+- Cyrillic letters that look identical to Latin ones inside English words,
+  and encoding damage (mojibake, fixed with `ftfy`).
+- Curly quotes and apostrophes, dashes, and ellipses, converted to ASCII.
+  Their use depends on the transcriber, not the band.
+
+Artist names that differ only in spelling or punctuation were merged when
+they are clearly the same band (for example Septic Flesh and Septicflesh), and
+kept separate otherwise.
+
+The original scrape replaced every line break with a space, so line-level
+features such as line length or end rhyme are not available.
+
+### Band sets
+
+Three sets of 10 bands were chosen by hand from the corpus genre tags. The
+death and power metal sets are kept separate because their themes differ
+sharply. A band was excluded from the Mixed set if any of its songs carries a
+Death or Power tag. Heavy Metal was not used as a narrow set because it is an
+umbrella label covering many subgenres. The band lists are stored in
+`configs/band_sets.json`.
+
+| Death | Power | Mixed |
+|---|---|---|
+| Cannibal Corpse | Blind Guardian | Accept |
+| Deicide | Bloodbound | Korn |
+| Immolation | Elvenking | Iron Maiden |
+| Incantation | Freedom Call | Venom |
+| Krisiun | Grave Digger | Sevendust |
+| Malevolent Creation | HammerFall | Black Label Society |
+| Napalm Death | Helloween | King Diamond |
+| Six Feet Under | Iced Earth | Megadeth |
+| Unleashed | Kamelot | W.A.S.P. |
+| Vader | Rage | GWAR |
+
+Each band is randomly downsampled to 100 songs, so every set has 1,000 songs
+and equal class sizes. Ten bands with 100 songs each was the largest size at
+which all three sets could be filled; earlier plans with 5 bands per set, or
+a 6-7 band Viking-themed set, were too small for fine-tuning DistilBERT.
+
+### Train/validation/test split
+
+Songs are split by album: every album lands entirely in one split
+(`StratifiedGroupKFold`, grouped by album, stratified by band). A random split
+would place re-recordings, reprises, and songs from the same concept album in
+both train and test, letting a model match near-copies or album-specific
+vocabulary instead of learning style. The album split asks whether the model
+recognizes a band on an album it has never seen.
+
+One fifth of each band's albums goes to test and one eighth of the remaining
+albums to validation. Each set comes out at about 70% train, 10% validation,
+and 20% test (for example, Death: 698 / 102 / 200 songs), and every band's
+test share is between 16% and 24%.
+
+## Method
+
+### Text versions
+
+`src/make_variants.py` adds three text versions to each dataset, so every
+model is trained on four versions of the same songs:
+
+| Version | Column | Change |
+|---|---|---|
+| Original | `lyrics_clean` | cleaned lyrics as described above |
+| Normalized | `lyrics_norm` | every punctuation mark replaced by a space, except apostrophes inside words; whitespace collapsed; capitalization kept |
+| Masked | `lyrics_masked` | topic words replaced by `[MASK]` |
+| Normalized + masked | `lyrics_norm_masked` | both changes |
+
+Masking replaces two kinds of words:
+
+- **Proper nouns**, as tagged by spaCy (`en_core_web_sm`). Tagging runs on the
+  original text, because punctuation and context help the tagger.
+- **Each band's 20 most distinctive recurring words.** All of a band's
+  training songs are joined into one document and scored with TF-IDF against
+  the other bands in the set. The highest-scoring words that occur in at least
+  3 of the band's training songs are kept, excluding spaCy stop words and
+  words containing apostrophes. Only the training split is used, so the test
+  set does not influence what is masked.
+
+Masking replaces about 9-10% of the words in each set. The word lists are
+saved in `results/masking/`.
+
+### Models
+
+- **Character n-grams + logistic regression** (`src/ngram_baseline.py`):
+  TF-IDF over character n-grams with case preserved, sublinear term frequency,
+  and n-grams that occur in at least 2 songs. The n-gram range (2-4, 3-5, 4-6)
+  and regularization strength C (1 to 100) are chosen by validation macro-F1;
+  the final model is retrained on train + validation and scored on test.
+- **DistilBERT** (`src/bert_classifier.py`): `distilbert-base-cased` (cased,
+  so capitalization is visible to the model), fine-tuned for 5 epochs with
+  learning rate 3e-5, batch size 16, and a maximum of 512 tokens per song
+  (0.8-5.3% of the original songs per set are truncated). The epoch with the best
+  validation macro-F1 is kept. It was run on a GPU in Google Colab with seed
+  42.
+
+### Evaluation
+
+The metric is macro-F1 on the test split, which weights every band equally.
+With 10 balanced classes, chance is 0.10. Each run also saves accuracy, a
+confusion matrix, and per-song predictions.
+
+## Results
+
+Test macro-F1 by model, band set, and text version (from
+`results/*/*/*/results.json`; DistilBERT is a single run with seed 42):
+
+| Model | Set | Original | Normalized | Masked | Normalized + masked |
+|---|---|---|---|---|---|
+| Char n-grams | Mixed | 0.737 | 0.692 | 0.722 | 0.650 |
+| Char n-grams | Death | 0.802 | 0.820 | 0.792 | 0.790 |
+| Char n-grams | Power | 0.780 | 0.744 | 0.750 | 0.724 |
+| DistilBERT | Mixed | 0.598 | 0.525 | 0.426 | 0.522 |
+| DistilBERT | Death | 0.627 | 0.671 | 0.623 | 0.610 |
+| DistilBERT | Power | 0.609 | 0.552 | 0.553 | 0.524 |
+
+Key findings:
+
+- **The n-gram model outperforms DistilBERT in all 12 conditions**, by 0.13 to
+  0.30 macro-F1.
+- **Masking affects DistilBERT more than the n-gram model on the Mixed set.**
+  DistilBERT's Mixed score falls from 0.598 to 0.426 (-0.17), while the n-gram
+  model's falls from 0.737 to 0.722 (-0.02). In the narrower sets, masking
+  changes both models by at most 0.06.
+- **Normalization has small average effects** (-0.02 for the n-gram model and
+  -0.03 for DistilBERT, averaged over the three sets) but large effects for
+  individual bands: the n-gram model's F1 for Accept drops from 0.76 to 0.46
+  (-0.31).
+- **Every score stays far above chance** after both changes; the lowest is
+  0.522, against a chance level of 0.10.
+
+`notebooks/analysis.ipynb` builds this table, the change from the original
+lyrics, and per-band F1 for every condition from the files in `results/`.
+
+## Limitations
+
+- **Single seed for DistilBERT.** Each condition was run once, so small
+  differences may be noise. For example, DistilBERT's Mixed score is lower
+  with masking alone (0.426) than with masking and normalization (0.522).
+- **No line breaks.** The original scrape removed them, so line-level
+  features are unavailable.
+- **Topic is only partly controlled.** Bands within a subgenre still differ in
+  theme: in the Death set, Napalm Death writes political lyrics, Unleashed
+  uses Viking themes, and Deicide is explicitly anti-religious. The Mixed set
+  leans toward traditional heavy metal (6 of 10 bands are tagged only Heavy
+  Metal).
+- **The masking word lists include some general words** (for example "oh",
+  "yeah", "like"), so masking removes some non-topical words as well.
+- **Band is not author.** Labels are bands, while lyricists change over a
+  band's career, and Genius transcriptions add the habits of individual
+  transcribers.
+
+## Repository structure
+
+```
+configs/
+  band_sets.json        band lists and songs-per-band cap for the three sets
+R/
+  export_corpus.R       downloads the corpus and exports it to Parquet
+src/
+  prepare_data.py       cleaning, deduplication, balancing, album split
+  make_variants.py      normalized and masked text versions
+  ngram_baseline.py     character n-gram + logistic regression model
+  bert_classifier.py    fine-tuned DistilBERT model (GPU)
+notebooks/
+  metal_stylometry_BERT_classifier.ipynb   Colab notebook used for the DistilBERT runs
+  analysis.ipynb                           results tables and per-band F1
+results/
+  ngram/<set>/<text version>/          results.json, predictions.csv, confusion_matrix.png
+  bert/<set>/<text version>/seed42/    same files for DistilBERT
+  masking/<set>_masked_words.json      masked words per band
+requirements.txt
+```
+
+`data/` (raw corpus and processed datasets) is created by the pipeline and is
+not tracked.
+
+## Reproducing the results
+
+All commands run from the repository root. Every step uses a fixed seed (42),
+so the same commands produce the same datasets.
+
+### Environment
 
 ```bash
-# 0. One-time setup
-#    R >= 4.5 with build tools (Ubuntu: build-essential, libcurl/ssl/xml dev libs)
+# R >= 4.5 with build tools (Ubuntu: build-essential and the libcurl, libssl, libxml2 dev packages)
 Rscript -e 'install.packages(c("remotes", "nanoparquet"))'
 Rscript -e 'remotes::install_gitlab("culturalcartography/text2map.corpora")'
-python3 -m pip install -r requirements.txt
 
-# 1. Download the corpus and export it to Parquet (~10 s; ~500 MB file)
-Rscript R/export_corpus.R               # -> data/raw/metal_lyrics.parquet
+# Python (versions in requirements.txt were tested with Python 3.14)
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python3 -m spacy download en_core_web_sm
+```
 
-# 2. Clean + dedupe, print per-artist counts (~1.5 min, ~3 GB RAM)
-python3 src/prepare_data.py             # -> data/processed/artist_counts.csv
+### 1. Export the corpus
 
-# 3. Build the three balanced, album-split datasets (run from the repo root)
+```bash
+Rscript R/export_corpus.R      # -> data/raw/metal_lyrics.parquet (~500 MB)
+```
+
+### 2. Build the three datasets
+
+```bash
 python3 src/prepare_data.py --artists "Cannibal Corpse, Deicide, Immolation, Incantation, Krisiun, Malevolent Creation, Napalm Death, Six Feet Under, Unleashed, Vader" --tag Death --cap 100
 python3 src/prepare_data.py --artists "Blind Guardian, Bloodbound, Elvenking, Freedom Call, Grave Digger, HammerFall, Helloween, Iced Earth, Kamelot, Rage" --tag Power --cap 100
 python3 src/prepare_data.py --artists "Accept, Korn, Iron Maiden, Venom, Sevendust, Black Label Society, King Diamond, Megadeth, W.A.S.P., GWAR" --tag Mixed --cap 100
-#    -> data/processed/dataset_{Death,Power,Mixed}_cap100.parquet (+ .json with the settings)
 ```
 
-The band lists and the cap are stored in `configs/band_sets.json`; the
-commands above are copied from it.
+Each run writes `data/processed/dataset_<set>_cap100.parquet` with a settings
+file alongside it, plus the cleaning outputs (`songs_clean.parquet`,
+`artist_counts.csv`, `removed.parquet`, `cleaning_report.json`). Cleaning
+takes about 1.5 minutes and 3 GB of RAM per run.
 
-Everything is deterministic (`--seed 42`), so the same commands give the same
-dataset. Run `python3 src/prepare_data.py --help` for all options.
+### 3. Add the text versions
 
-| File (data/processed/) | Contents |
-|---|---|
-| `songs_clean.parquet` | cleaned, deduplicated songs of all artists with >= `--min-songs` songs |
-| `artist_counts.csv` | songs, albums, years, median length, genres per artist |
-| `removed.parquet` | every removed song, the reason, and the song it duplicated |
-| `cleaning_report.json` | row counts before/after each step |
-| `dataset_<tag>_cap<C>.parquet` | final dataset; `lyrics_clean` is the model input, `split` is train/val/test |
+```bash
+python3 src/make_variants.py --tag Death
+python3 src/make_variants.py --tag Power
+python3 src/make_variants.py --tag Mixed
+```
 
-## Band sets
+### 4. Character n-gram model
 
-Three sets of 10 bands, 100 songs per band, built with identical settings.
-"Songs" is the number available after cleaning (before downsampling to 100);
-"Tags" are the corpus genre labels across the band's songs, with the number
-of songs carrying each label when not all of them do.
+```bash
+for set in Death Power Mixed; do
+  for col in lyrics_clean lyrics_norm lyrics_masked lyrics_norm_masked; do
+    python3 src/ngram_baseline.py --tag $set --text-col $col
+  done
+done
+```
 
-**Death** (`dataset_Death_cap100.parquet`)
+### 5. DistilBERT (GPU)
 
-| Band | Tags | Songs |
-|---|---|---|
-| Cannibal Corpse | Death Metal | 167 |
-| Deicide | Death Metal | 126 |
-| Immolation | Death Metal | 107 |
-| Incantation | Death Metal | 107 |
-| Krisiun | Death Metal | 110 |
-| Malevolent Creation | Death Metal | 142 |
-| Napalm Death | Death Metal (170), Grindcore (47) | 191 |
-| Six Feet Under | Death Metal | 114 |
-| Unleashed | Death Metal | 144 |
-| Vader | Death Metal | 141 |
+The DistilBERT runs used Google Colab with a T4 GPU, through
+`notebooks/metal_stylometry_BERT_classifier.ipynb`. Because `data/` is not in
+the repository, the local `data/` folder (containing `processed/` with the
+four-version datasets from step 3) was uploaded to Google Drive. The notebook
+then:
 
-**Power** (`dataset_Power_cap100.parquet`)
+1. mounts Google Drive, clones this repository, and links the Drive folder
+   into the clone as `data/` (`ln -s <Drive folder> data`; change the path to
+   the folder's location in your own Drive);
+2. installs `transformers` and `accelerate`;
+3. runs `src/bert_classifier.py` once per band set and text version, which is
+   equivalent to:
 
-| Band | Tags | Songs |
-|---|---|---|
-| Blind Guardian | Power Metal, Heavy Metal (17), Symphonic Metal (13), Thrash Metal (13) | 107 |
-| Bloodbound | Power Metal (87), Heavy Metal (32) | 109 |
-| Elvenking | Power Metal, Folk Metal (43) | 123 |
-| Freedom Call | Power Metal | 119 |
-| Grave Digger | Heavy Metal, Power Metal (185) | 211 |
-| HammerFall | Power Metal, Heavy Metal (102) | 123 |
-| Helloween | Power Metal (139), Heavy Metal (50) | 167 |
-| Iced Earth | Heavy Metal, Power Metal (127) | 129 |
-| Kamelot | Power Metal (115), Symphonic Metal (51), Thrash Metal (51), Progressive Metal (24), Heavy Metal (10) | 129 |
-| Rage | Power Metal (269), Heavy Metal (168), Symphonic Metal (35), Thrash Metal (35), Progressive Metal (10) | 307 |
+   ```bash
+   for set in Death Power Mixed; do
+     for col in lyrics_clean lyrics_norm lyrics_masked lyrics_norm_masked; do
+       python3 src/bert_classifier.py --tag $set --text-col $col
+     done
+   done
+   ```
 
-**Mixed** (`dataset_Mixed_cap100.parquet`)
+4. copies `results/` back to Google Drive, since files in the Colab session
+   are deleted when it ends.
 
-| Band | Tags | Songs |
-|---|---|---|
-| Accept | Heavy Metal | 175 |
-| Korn | Alt Metal | 162 |
-| Iron Maiden | Heavy Metal | 148 |
-| Venom | Heavy Metal | 143 |
-| Sevendust | Alt Metal, Groove Metal (11) | 134 |
-| Black Label Society | Heavy Metal (112), Southern Metal (111), Groove Metal (23) | 123 |
-| King Diamond | Heavy Metal | 122 |
-| Megadeth | Heavy Metal | 122 |
-| W.A.S.P. | Heavy Metal | 118 |
-| GWAR | Heavy Metal (96), Alt Metal (30) | 112 |
+Results are written to `results/bert/<set>/<text version>/seed42/`; copy them
+into `results/` in the local repository before running the analysis.
 
-## Data decisions
+### 6. Analysis
 
-Numbers are from the current corpus version. `cleaning_report.json` has the
-exact counts for your run.
+Open `notebooks/analysis.ipynb` and run all cells. It reads only the files in
+`results/`.
 
-### Export format: Parquet, not CSV
-The export is Parquet (via `nanoparquet`, a dependency-free R package). The
-file is about the same size as the CSV (~500 MB, because lyrics text only
-compresses ~2x), so size isn't the reason. The reasons are:
-- **Types survive.** A CSV round trip turned a song actually titled "None" into
-  a missing value; Parquet stores strings as strings and integers as integers.
-- **Columnar reads.** `pd.read_parquet(columns=[...])` skips the large unused
-  `lyrics_prepped` / `word_position` columns without parsing them.
-- No quoting/escaping ambiguity for lyrics full of commas, quotes and brackets.
+## Use of AI tools
 
-Cost: not human-readable or greppable, and it needs `pyarrow`. `--csv` writes a
-CSV copy if you ever need one.
-
-### 1. Duplicate rows from the genre scrape (-41,813 rows, 21.6%)
-The corpus was scraped genre by genre, so an album tagged with k genres appears
-k times: same URL and lyrics, different `genre`/`score`. Keeping these would
-inflate artist counts (Rage 605 -> 307, Grave Digger 413 -> 211) and, worse, put
-identical songs in both train and test. One row per URL is kept, and all its
-genre labels are joined into a `genres` column (used for picking the band sets).
-
-`song_number` is the track number within an album, not an ID; the export adds
-`row_id` (original row order) for traceability.
-
-### 2. Artist names
-Names are already ASCII-folded in the corpus ("Motorhead", "Queensryche").
-Normalizing case and punctuation finds 10 colliding pairs. Only pairs that are
-clearly the same band are merged, via a hand-checked map (`ARTIST_ALIASES`):
-Septic Flesh/Septicflesh, Rhapsody/Rhapsody of Fire (renamed in 2006),
-spelling variants such as Harms Way/Harm's Way. Look-alikes that are different
-bands (The Sword vs Sword, The Sorrow vs Sorrow) stay separate.
-
-### 3. Text cleaning (raw `lyrics`, never `lyrics_prepped`)
-`lyrics_prepped` is lowercased and stripped of punctuation and contractions,
-which are core stylometric signals, so cleaning starts from the raw `lyrics`.
-The guiding rule: **remove anything not written by the band**, and leave the
-band's own text alone (case, punctuation, contractions, repeated choruses).
-
-| Removed or normalized | Why |
-|---|---|
-| Genius page header: `1 Contributor` / `Translations Español ...` / `<Title> Lyrics` (148k songs) | page residue; the title would leak into features |
-| Genius "About" blurbs before the first section tag, e.g. "This song is about bikers..." (~380 songs) | editorial prose by Genius users |
-| All `[...]` tags (327k): `[Chorus]`, `[Verse 2: Anette Olzon]`, `[Guitar Solo: Kerry King]`, `[?]` | 36k tags name band members: a direct label leak |
-| Old-style directions: `(Chorus)`, `(x2)`, `Chorus:`, `x4` | transcription markup |
-| Curly quotes, `´`, dashes, `…` -> ASCII | transcriber habit, not the band's: the curly-apostrophe share ranges from 0% (Pro-Pain) to 23% (U.D.O.) |
-| Cyrillic look-alike letters inside English words ("Hеll" with Cyrillic е; ~2.6k songs) | invisible artifact; a char n-gram model would learn it |
-| Mojibake (`Itâ€™s` -> `It's`; ~100 songs) via `ftfy` | encoding damage, concentrated in a few artists |
-| Missing space at deleted line breaks (`me?You` -> `me? You`) | scrape artifact |
-
-**No line breaks.** The scrape replaced every line break with a space (0 of
-193k songs contain `\n`). Line-level features (line length, rhymes at line
-ends) are therefore unavailable. Capitalized line starts survive and act as a
-weak line signal.
-
-**No extra language filter.** `language` is "en" for all rows. A function-word
-ratio filter was considered and rejected: the lowest-ratio songs are English
-death/grind noun-heaps ("Dripping, melting Decaying, dying..."), which are a
-writing style, not another language.
-
-### 4. Empty, instrumental and placeholder songs (-1,912)
-Songs with fewer than 30 words after cleaning are dropped (`--min-words`). This
-catches instrumentals (`[Instrumental]` leaves 0 words), placeholders
-(`TO BE IDENTIFIED`, `Page needs help... Paging Shell Page Bot`) and fragments.
-Under ~30 words a song has only a handful of function words, too few for
-frequency-based features. Genuinely short songs (grindcore) above the threshold
-are kept, because brevity is part of their style.
-
-### 5-7. Covers, re-recordings, live versions
-Exact matching misses most versions (different transcriptions, extra chorus
-repeats). Each song is represented as a set of word 5-grams, and two songs
-match when **containment** `|A ∩ B| / min(|A|, |B|)` is high. Containment
-rather than Jaccard, because a live version with extra repeats still
-*contains* the original.
-
-- **Covers** (step 5, -433): a candidate artist's song with containment >= 0.8
-  against an *earlier* song by another artist, or with "cover" in the title.
-  Audited examples: Primal Fear "Breaker" (Accept, 1981), Unleashed "Evil Dead"
-  (Death, 1987), Wolf "Die by the Sword" (Slayer, 1983). For authorship, a
-  cover carries the wrong label.
-- **Same-artist versions** (step 6, -847): songs with containment >= 0.5 are
-  clustered and only the earliest is kept (ties: the title without a version
-  marker). Inspection of pairs showed >= 0.5 is almost always the same song
-  (acoustic, re-recorded, German version); 0.3-0.5 mixes remixes with distinct
-  songs that share a refrain in a concept album.
-- **Version titles** (step 7, -28): "Song (Live)" / "Song - 2025 Version" when
-  the artist also has "Song". Catches remixes that rearrange the lyrics too
-  much for the 5-gram check.
-
-`removed.parquet` lists every removal with its matched song, for auditing.
-These checks only run for artists that could still reach `--min-songs`
-(dedup only lowers counts), which keeps memory under ~3 GB.
-
-### Experimental design: three band sets
-**Research question.** Do the classifiers identify bands by style, or by
-shared subject matter? A topically mixed set is compared with two topically
-narrower sets. If accuracy drops sharply when all bands write about the same
-things, the models were leaning on topic. Having two narrow sets acts as a
-replication: one narrow set could be easy or hard for idiosyncratic reasons.
-
-**Why death and power metal.** Metal subgenres concentrate in a few lyric
-topics (Aljanaki 2024), so a subgenre is a practical stand-in for "shared
-subject matter". The two are kept in separate sets because their themes differ
-sharply (gore, death and anti-religion vs. fantasy, heroism and history);
-merged, they would just form another mixed set.
-
-**How bands were picked.** By hand, from the subgenre tags in a notebook,
-because `prepare_data.py` selects by artist (`--artists` / `--top-n`), not by
-genre. A band was excluded from the Mixed set if any of its songs carries a
-Death or Power tag, so the Mixed set doesn't overlap the narrow ones.
-
-**Why 10 x 100.** It is the largest size at which all three sets could be
-filled with eligible bands (>= 3 albums, >= 100 songs after cleaning). Earlier
-plans (5 bands per set, or a 6-7 band Viking set) were too small for
-fine-tuning DistilBERT.
-
-**Rejected options.**
-- *Heavy Metal as a shared-topic set*: it is an umbrella label spanning many
-  subgenres, so it isn't topically narrow.
-- *The earlier runs* (`dataset_top20_cap157`, `dataset_viking_cap64`) are
-  superseded: neither compared topic-matched sets, and the Viking set was too small.
-
-**Known limitations of the sets.**
-- The Death set is not topically uniform: Napalm Death writes political
-  lyrics, Unleashed has Viking themes, Deicide is explicitly anti-religious.
-- The Mixed set leans toward traditional heavy metal (6 of 10 bands are
-  tagged only Heavy Metal), alongside alt/nu metal, thrash and others.
-
-### Balancing: equal songs per artist
-After cleaning, the listed artists (each must have >= 3 albums) are randomly
-downsampled to the same number of songs (`--cap 100`; without `--cap`, the
-smallest selected artist's count). With equal class sizes, accuracy and
-macro-F1 can't be inflated by predicting the biggest artist, and the
-confusion matrix rows are directly comparable. Using the same cap for all
-three sets also keeps their results comparable.
-
-### Train/val/test split by album
-Albums are kept whole: every (artist, album) pair lands in exactly one split
-(`StratifiedGroupKFold`, groups = album, stratified by artist; the script
-asserts this). Why not a random split:
-- **Leakage.** Versions that escaped dedup, reprises, and shared refrains sit on
-  the same album or across closely related ones. A random split would let the
-  model match near-copies instead of learning style.
-- **Album-specific vocabulary.** Concept albums share names and themes
-  (Rhapsody's dragons, Sabaton's battles). A random split rewards memorizing
-  album topics. An album split asks the harder, more honest question: can the
-  model recognize an artist on an album it has never seen?
-
-Defaults: 1/5 of albums -> test, 1/8 of the remaining albums -> val (for
-DistilBERT early stopping and hyperparameter choice). Each of the three sets
-comes out at roughly 70% train / 10% val / 20% test (e.g. Death: 698 / 102 /
-200 songs), and every band's test share is between about 16% and 24%. Shares
-vary a little because albums differ in size.
-
-### Evaluation plan
-A single album-based split (the one above, `--seed 42`) is used during
-development. Final results are averaged over 2-3 random seeds, so that a
-single run doesn't decide the comparison between sets.
-
-## Known limitations
-- **Band != author.** Labels are bands. Lyricists change over a band's career,
-  and some lyricists wrote for several bands (e.g. Accept and U.D.O. share
-  history). Genius transcriptions are also crowd-written, so residual
-  transcriber habits remain, even after normalization.
-- Lines can't be recovered (see above).
-- Dedup and blurb detection are heuristics; thresholds are CLI options for
-  sensitivity checks (`--dup-threshold`, `--cover-threshold`, `--min-words`).
-- DistilBERT's 512-token limit truncates long songs (median ~180 words is fine;
-  Cradle of Filth's median is 353 words). Handle this in the model code.
-
+Claude Code was used to set up the R environment and to write the corpus
+export (`R/export_corpus.R`) and the data-cleaning pipeline
+(`src/prepare_data.py`). The author specified the requirements, asked it to
+inspect the data and explain each decision, reviewed every finding, and made
+the design decisions.

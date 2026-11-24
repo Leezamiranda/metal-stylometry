@@ -1,4 +1,6 @@
-# Data pipeline (versions tested on Python 3.14.4)
+# Versions tested on Python 3.14.4
+
+# Data pipeline and n-gram model
 pandas==3.1.0
 pyarrow==26.0.0
 numpy==2.5.4
@@ -6,6 +8,12 @@ scipy==1.18.1
 scikit-learn==1.9.1
 ftfy==6.3.1
 matplotlib==3.11.2
+spacy==3.8.18   # also run: python3 -m spacy download en_core_web_sm
+
+# DistilBERT (GPU; run on Colab)
 torch==2.14.1
 transformers==5.22.1
-spacy==3.8.18
+accelerate==1.16.0   # required by transformers.Trainer
+
+# Analysis notebook
+jupyterlab==4.6.6
